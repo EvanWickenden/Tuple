@@ -28,17 +28,27 @@ int main()
     typedef Quicksort<_LessThan, T2>::Result T3;
     T3::print(); BR;
 
-    typedef Descend<10>::Result T4;
+    typedef Concat<T3, T3>::Result T32;
+    T32::print(); BR;
+
+    typedef Quicksort<_LessThan, T32>::Result T4;
     T4::print(); BR;
 
-    typedef Descend<3>::Result D3;
-    
-    typedef Nest<Descend<3>::Result, Descend<2>::Result >::Result N1;
-    N1::print(); BR;
+    BR;
 
-//    typedef FlipNest<D3, D3>::Result N2;
-//    N2::print(); BR;
+    typedef Descend<2>::Result D1;
+    D1::print(); BR;
 
-    typedef Combine<Descend<3>::Result, Descend<3>::Result >::Result C1;
-    C1::print(); BR;
+    typedef Reverse<D1>::Result A1;
+    A1::print(); BR; 
+
+    BR; BR;
+    typedef Combine<D1>::Result D2;
+    D2::print(); BR;
+
+    typedef Combine<D1, D2>::Result D3;
+    D3::print(); BR;
+
+    typedef Combine<D1, D1, D1, D1>::Result D4;
+    D4::print(); BR;
 };
