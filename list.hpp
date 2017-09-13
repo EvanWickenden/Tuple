@@ -22,9 +22,25 @@ namespace List
     {
         typedef int Result;
     };
+    template <> struct ExtractArgs<long>
+    {
+        typedef long Result;
+    };
+    template <> struct ExtractArgs<float>
+    {
+        typedef float Result;
+    };
     template <> struct ExtractArgs<double>
     {
         typedef double Result;
+    };
+    template <typename T> struct ExtractArgs<T *>
+    {
+        typedef T * Result;
+    };
+    template <typename T> struct ExtractArgs<T&>
+    {
+        typedef T & Result;
     };
     template <typename ...Ts> struct TupleArgs {};
     template <> struct TupleArgs<>
@@ -40,6 +56,9 @@ namespace List
     };
     /***************************************************************/
 
+    /* forward declaration */
+    template <typename ...Ts> struct List;
+
     /* base class manufacturer */
     /***************************************************************/
     template <typename _Head, typename _Tail, typename _ArgTuple> struct __BaseList;
@@ -51,14 +70,13 @@ namespace List
     };
     /***************************************************************/
 
-    /* forward declaration */
-    template <typename ...Ts> struct List;
 
     /* base class */
     /***************************************************************/
     template <typename ...Ts> struct BaseList : public Tuple<Ts...> 
     {
         typedef BaseList<> BL;
+        static const int size = 0;
         friend std::ostream& operator << (std::ostream& stream, BL& l)
         {
             stream << "[]";
@@ -67,6 +85,7 @@ namespace List
     };
     template <typename T, typename ...Ts> struct BaseList<T, Ts...> : public __BaseList<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>
     {
+        static const int size = 1 + BaseList<Ts...>::size;
         typedef BaseList<T, Ts...> BL;
         using __BaseList<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>::__BaseList;
 

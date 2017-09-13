@@ -125,6 +125,23 @@ namespace Tuple
     template <typename T1, typename T2, typename T3, typename T4> using FourTuple = Tuple<T1, T2, T3, T4>;
     /***************************************************************/
 
+
+    /***************************************************************/
+    template <int i, typename _Tuple> struct Get {};
+    template <int i> struct Get<i, Nil>
+    {
+        static_assert(i && !i, "element out of bounds");
+    };
+    template <typename T> struct Get<0, Tuple<T> >
+    {
+        typedef T Result;
+    };
+    template <int i, typename T, typename ...Ts> struct Get<i, Tuple<T, Ts...> >
+    {
+        typedef typename Get<i-1, Tuple<Ts...> >::Result Result;
+    };
+    /***************************************************************/
+
     /***************************************************************/
     template <typename _Callback, typename _Tuple> struct ApplyTuple {};
     template <typename _Callback, typename ...Ts> struct ApplyTuple<_Callback, Tuple<Ts...> >

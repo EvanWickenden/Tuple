@@ -19,6 +19,9 @@ namespace Type
     template <typename _Type, _Type T> struct Type : public __Type<_Type, T> { };
 
     template <int N> using Int = Type<int, N>;
+
+    struct False { static const bool value = false; };
+    struct True { static const bool value = true; };
 }
 
 #endif 
