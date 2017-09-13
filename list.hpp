@@ -2,6 +2,7 @@
 #define __LIST_HPP__
 
 #include "tuple.hpp"
+#include <iostream>
 
 namespace List
 {
@@ -52,10 +53,37 @@ namespace List
     /***************************************************************/
 
     /***************************************************************/
-    template <typename ...Ts> struct List : public Tuple<Ts...> {};
+    template <typename ...Ts> struct List : public Tuple<Ts...> 
+    {
+        typedef List<> L;
+        friend std::ostream& operator << (std::ostream& stream, L& l)
+        {
+            stream << "[]";
+            return stream;
+        };
+    };
     template <typename T, typename ...Ts> struct List<T, Ts...> : public __List<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>
     {
+        typedef List<T, Ts...> L;
         using __List<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>::__List;
+
+        friend std::ostream& operator << (std::ostream& stream, L& l)
+        {
+            stream << l.head << ":" << l.tail;
+            return stream;
+        };
+    };
+    typedef List<> Empty;
+    /***************************************************************/
+
+    /***************************************************************/
+    template <typename T = Nil> struct TupleToList 
+    {
+        typedef Empty Result;
+    };
+    template <typename ...Ts> struct TupleToList<Tuple<Ts...> >
+    {
+        typedef List<Ts...> Result;
     };
     /***************************************************************/
 };
