@@ -8,6 +8,7 @@ namespace List
 {
     using namespace Tuple;
 
+    /* helper fns */
     /***************************************************************/
     template <typename T> struct ExtractArgs
     {
@@ -25,9 +26,6 @@ namespace List
     {
         typedef double Result;
     };
-    /***************************************************************/
-
-    /***************************************************************/
     template <typename ...Ts> struct TupleArgs {};
     template <> struct TupleArgs<>
     {
@@ -42,38 +40,95 @@ namespace List
     };
     /***************************************************************/
 
+    /* base class manufacturer */
     /***************************************************************/
-    template <typename _Head, typename _Tail, typename _ArgTuple> struct __List;
-    template <typename _Head, typename _Tail, typename A, typename ...As> struct __List<_Head, _Tail, Tuple<A, As...> > : public Prepend<_Head, _Tail>::Result 
+    template <typename _Head, typename _Tail, typename _ArgTuple> struct __BaseList;
+    template <typename _Head, typename _Tail, typename A, typename ...As> struct __BaseList<_Head, _Tail, Tuple<A, As...> > : public Prepend<_Head, _Tail>::Result 
     {
         _Head head;
         _Tail tail;
-        __List(A head, As... tail) : head(head), tail(tail...) {}
+        __BaseList(A head, As... tail) : head(head), tail(tail...) {}
     };
     /***************************************************************/
 
+    /* forward declaration */
+    template <typename ...Ts> struct List;
+
+    /* base class */
     /***************************************************************/
-    template <typename ...Ts> struct List : public Tuple<Ts...> 
+    template <typename ...Ts> struct BaseList : public Tuple<Ts...> 
     {
-        typedef List<> L;
-        friend std::ostream& operator << (std::ostream& stream, L& l)
+        typedef BaseList<> BL;
+        friend std::ostream& operator << (std::ostream& stream, BL& l)
         {
             stream << "[]";
             return stream;
         };
     };
-    template <typename T, typename ...Ts> struct List<T, Ts...> : public __List<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>
+    template <typename T, typename ...Ts> struct BaseList<T, Ts...> : public __BaseList<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>
     {
-        typedef List<T, Ts...> L;
-        using __List<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>::__List;
+        typedef BaseList<T, Ts...> BL;
+        using __BaseList<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>::__BaseList;
 
-        friend std::ostream& operator << (std::ostream& stream, L& l)
+        friend std::ostream& operator << (std::ostream& stream, BL& l)
         {
-            stream << l.head << ":" << l.tail;
+            BaseList<Ts...>& tail = l.tail;
+            stream << l.head << ":" << tail;
             return stream;
         };
     };
+    /***************************************************************/
+
+    /* main class; partial specializations */
+    /***************************************************************/
+
+#define ARGS(type)  typename ExtractArgs<type>::Result 
+
+    /* polymorphic declaration */
+    template <typename ...Ts> struct List : public BaseList<Ts...> 
+    {
+        using BaseList<Ts...>::BaseList;
+    };
+
+    /* fixed-size specializations & typedefs */
     typedef List<> Empty;
+
+    template <typename A> struct List<A> : public BaseList<A>
+    { 
+        typedef List<A> L;
+        typedef BaseList<A> BL;
+        A& one;
+        List(ARGS(A) one) : BL(one), one(BL::head) {}
+    };
+    template <typename T> using OneList = List<T>;
+    
+    template <typename A, typename B> struct List<A, B> : public BaseList<A, B>
+    {
+        typedef List<A, B> L;
+        typedef BaseList<A, B> BL;
+        A& one; B& two;
+        List(ARGS(A) one, ARGS(B) two) : BL(one, two), one(BL::head), two(BL::tail.head) {}
+        friend std::ostream& operator << (std::ostream& stream, L& l)
+        {
+            stream << "[" << l.one << ", " << l.two << "]";
+            return stream;
+        };
+    };
+    template <typename A, typename B> using TwoList = List<A, B>;
+
+    template <typename A, typename B, typename C> struct List<A, B, C> : public BaseList<A, B, C>
+    {
+        typedef List<A, B, C> L;
+        typedef BaseList<A, B, C> BL;
+        A& one; B& two; C& three;
+        List(ARGS(A) one, ARGS(B) two, ARGS(C) three) : BL(one, two, three), one(BL::head), two(BL::tail.head), three(BL::tail.tail.head) {}
+        friend std::ostream& operator << (std::ostream& stream, L& l)
+        {
+            stream << "[" << l.one << ", " << l.two << ", " << l.three << "]";
+            return stream;
+        };
+    };
+    template <typename A, typename B> using TwoList = List<A, B>;
     /***************************************************************/
 
     /***************************************************************/
