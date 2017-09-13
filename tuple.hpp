@@ -1,5 +1,5 @@
-#ifndef __LIST_HPP__
-#define __LIST_HPP__
+#ifndef __TUPLE_HPP__
+#define __TUPLE_HPP__
 
 #include <iostream>
 
@@ -28,7 +28,6 @@
     struct { template <typename __A__, typename __B__, typename ...__Cs__> using Call = typename ::Tuple::ApplyTuple<type, ::Tuple::Tuple<__A__, __B__, arg, __Cs__...> >::Result; }
 
 
-
 namespace Tuple
 {
 
@@ -36,7 +35,6 @@ namespace Tuple
 
     /* forward declaration */
     template <typename ...Ts> struct Tuple;
-    template <typename T, typename _Tuple = Nil> struct Prepend;
 
     /***************************************************************/
     /* common member functions */
@@ -144,6 +142,7 @@ namespace Tuple
     {
         typedef Tuple<T, Ts...> Result;
     };
+    typedef CALLBACK(Prepend) prepend;
     /***************************************************************/
 
     /***************************************************************/
@@ -155,6 +154,7 @@ namespace Tuple
     {
         typedef typename Prepend<T, typename Append<V, Tuple<Ts...> >::Result>::Result Result;
     };
+    typedef CALLBACK(Append) append;
     /***************************************************************/
 
 
@@ -170,6 +170,7 @@ namespace Tuple
     {
         typedef T2 Result;
     };
+    typedef CALLBACK(Concat) concat;
     /***************************************************************/
 
 
@@ -198,6 +199,7 @@ namespace Tuple
             typename Foldr<_Callback, Acc, Tuple<Ts...> >::Result
         >::Result Result;
     };
+    typedef CALLBACK(Foldr) foldr;
     /***************************************************************/
 
     /***************************************************************/
@@ -214,6 +216,7 @@ namespace Tuple
             Tuple<Ts...> 
         >::Result Result;
     };
+    typedef CALLBACK(Foldl) foldl;
     /***************************************************************/
 
     /***************************************************************/
@@ -228,6 +231,7 @@ namespace Tuple
             typename FMap<_Callback, Tuple<Ts...> >::Result
         >::Result Result;
     };
+    typedef CALLBACK(FMap) fmap;
     /***************************************************************/
 
     /***************************************************************/
@@ -237,6 +241,7 @@ namespace Tuple
         typedef FLIP(_Prepend) _FP;
         typedef typename Foldl<_FP, Nil, _Tuple>::Result Result;
     };
+    typedef CALLBACK(Reverse) reverse;
     /***************************************************************/
 
 
@@ -255,6 +260,7 @@ namespace Tuple
         } CB;
         typedef typename Foldr<CB, TwoTuple<Nil, Nil>, _Tuple>::Result Result;
     };
+    typedef CALLBACK(Split) split;
     /***************************************************************/
 
     /***************************************************************/
@@ -274,6 +280,7 @@ namespace Tuple
             >::Result
         >::Result Result;
     };
+    typedef CALLBACK(Quicksort) quicksort;
     /***************************************************************/
 
     /* integer list operations */
@@ -291,8 +298,12 @@ namespace Tuple
             };
         };
         typedef typename Split<CB, Tuple<Ts...> >::Result S;
-        typedef typename Concat<typename S::First, typename Prepend<T, typename S::Second>::Result>::Result Result;
+        typedef typename Concat<
+            typename IntQuicksort<typename S::First>::Result, 
+            typename Prepend<T, typename IntQuicksort<typename S::Second>::Result >::Result 
+        >::Result Result;
     };
+    typedef CALLBACK(IntQuicksort) intquicksort;
     /***************************************************************/
 
 
@@ -318,6 +329,7 @@ namespace Tuple
         typedef CURRY2(_Prepend, Tuple<Inner>) CB;
         typedef typename FMap<CB, Outer>::Result Result;
     };
+    typedef CALLBACK(Nestl) nestl;
     /***************************************************************/
 
     /***************************************************************/
@@ -327,14 +339,16 @@ namespace Tuple
         typedef CURRY2(_Append, Tuple<Inner>) CB;
         typedef typename FMap<CB, Outer>::Result Result;
     };
+    typedef CALLBACK(Nestr) nestr;
     /***************************************************************/
 
     /***************************************************************/
-    template <typename _Callback, typename Outer, typename Inner> struct NestWith
+    template <typename _Callback, typename Outer, typename Inner> struct NestlWith
     {
         typedef CURRY2(_Callback, Inner) CB;
         typedef typename FMap<CB, Outer>::Result Result;
     };
+    typedef CALLBACK(NestlWith) nestlwith;
     /***************************************************************/
 
     /***************************************************************/
@@ -343,9 +357,8 @@ namespace Tuple
         typedef CURRY(_Callback, Inner) CB;
         typedef typename FMap<CB, Outer>::Result Result;
     };
+    typedef CALLBACK(NestrWith) nestrwith;
     /***************************************************************/
-
-
 
     /***************************************************************/
     template <typename T1 = Nil, typename T2 = Nil> struct Splice
@@ -356,6 +369,7 @@ namespace Tuple
     {
         typedef typename Prepend< Tuple<T,S>, typename Splice<Tuple<Ts...>, Tuple<Ss...> >::Result >::Result Result;
     };
+    typedef CALLBACK(Splice) splice;
     /***************************************************************/
 
 
@@ -368,7 +382,9 @@ namespace Tuple
     {
         typedef typename Concat<T, typename Flatten<Tuple<Ts...> >::Result>::Result Result;
     };
+    typedef CALLBACK(Flatten) flatten;
     /***************************************************************/
+
 
     /***************************************************************/
     template <typename T> struct IsTuple
@@ -379,27 +395,42 @@ namespace Tuple
     {
         static const bool value = true;
     };
+    typedef CALLBACK(IsTuple) istuple;
     /***************************************************************/
 
 
-    /***************************************************************/
+//    /***************************************************************/
     template <typename ...Ts> struct Combine {};
     template <typename ...Ts> struct Combine<Tuple<Ts...> >
     {
-        template <typename T> struct Wrap { typedef Tuple<T> Result; };
-        typedef CALLBACK(Wrap) _Wrap;
-        typedef typename FMap<_Wrap, Tuple<Ts...> >::Result Result;
+        typedef Tuple<Ts...> Result;
     };
     template <typename ...Ss, typename _Tuple, typename ...Ts> struct Combine<Tuple<Ss...>, _Tuple, Ts...>
     {
-        typedef CALLBACK(NestrWith) _NestrWith;
-        typedef CALLBACK(Prepend) _Prepend;
-        typedef CURRY(_NestrWith, _Prepend) _NestrWithPrepend;
-        typedef typename Flatten<typename NestWith<_NestrWithPrepend, Tuple<Ss...>, typename Combine<_Tuple, Ts...>::Result >::Result >::Result Result;
+        typedef CURRY(nestrwith, prepend) nestrwithprepend;
+        typedef typename Flatten<
+            typename NestlWith<
+                nestrwithprepend, 
+                Tuple<Ss...>, 
+                typename Combine<_Tuple, Ts...>::Result 
+            >::Result 
+        >::Result Result;
+    };
+    /***************************************************************/
+
+    /***************************************************************/
+    template <typename callback, typename ...Ts> struct CombineWith {};
+    template <typename callback, typename ...Ts> struct CombineWith<callback, Tuple<Ts...> >
+    {
+        typedef Tuple<Ts...> Result;
+    };
+    template <typename callback, typename ...Ss, typename _Tuple, typename ...Ts> struct CombineWith<callback, Tuple<Ss...>, _Tuple, Ts...>
+    {
+        typedef CURRY(nestrwith, callback) nestrwithcallback;
+        typedef typename Flatten<typename NestlWith<nestrwithcallback, Tuple<Ss...>, typename CombineWith<callback, _Tuple, Ts...>::Result >::Result >::Result Result;
     };
     /***************************************************************/
 };
-
 
 
 
