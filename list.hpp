@@ -61,11 +61,11 @@ namespace List
 
     /* base class manufacturer */
     /***************************************************************/
-    template <typename _Head, typename _Tail, typename _ArgTuple> struct __BaseList;
-    template <typename _Head, typename _Tail, typename A, typename ...As> struct __BaseList<_Head, _Tail, Tuple<A, As...> > : public Prepend<_Head, _Tail>::Result 
+    template <typename _Head, typename _Tail, typename _HeadArg, typename _TailArgs> struct __BaseList;
+    template <typename T, typename ...Ts, typename A, typename ...As> struct __BaseList<T, List<Ts...>, A, Tuple<As...> > : public Prepend<T, Tuple<Ts...>>::Result 
     {
-        _Head head;
-        _Tail tail;
+        T head;
+        List<Ts...> tail;
         __BaseList(A head, As... tail) : head(head), tail(tail...) {}
     };
     /***************************************************************/
@@ -83,12 +83,11 @@ namespace List
             return stream;
         };
     };
-    template <typename T, typename ...Ts> struct BaseList<T, Ts...> : public __BaseList<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>
+    template <typename T, typename ...Ts> struct BaseList<T, Ts...> : public __BaseList<T, List<Ts...>, typename ExtractArgs<T>::Result, typename TupleArgs<Ts...>::Result>
     {
         static const int size = 1 + BaseList<Ts...>::size;
         typedef BaseList<T, Ts...> BL;
-        using __BaseList<T, List<Ts...>, typename TupleArgs<T, Ts...>::Result>::__BaseList;
-
+        using __BaseList<T, List<Ts...>, typename ExtractArgs<T>::Result, typename TupleArgs<Ts...>::Result>::__BaseList;
         friend std::ostream& operator << (std::ostream& stream, BL& l)
         {
             BaseList<Ts...>& tail = l.tail;
